@@ -7,6 +7,21 @@ from shapely.ops import nearest_points
 
 from config import *
 
+
+
+def get_circle_obstacle(c, r):
+    if ENABLE_FAST_GRAPHICS:
+        (x, y) = c
+        points = []
+        EDGES = 4
+        for i in range(EDGES+1):
+            angle = (2*i+1)*(math.pi/EDGES)
+            points+=[(r*math.cos(angle)+x, r*math.sin(angle)+y)]
+        return LineString(points)
+    else:
+        return Point(c).buffer(r).boundary
+
+
 # Generate a list of obstacles
 # Each obstacle is a LineString
 def get_basic_obstacles():
@@ -17,16 +32,16 @@ def get_basic_obstacles():
     # Balises equipe cote droit
     # Diametre de 9cm pour avoir 1cm de marge
     if (START_ON_THE_RIGHT and WE_HAVE_BEACONS) or (not START_ON_THE_RIGHT and ENNEMY_HAS_BEACONS):
-        obstacles += [Point(-1500-22-50, +1000-50).buffer(45).boundary]
-        obstacles += [Point(-1500-22-50, -1000+50).buffer(45).boundary]
-        obstacles += [Point(+1500+22+50, 0).buffer(45).boundary]
+        obstacles += [get_circle_obstacle((-1500-22-50, +1000-50), 45)]
+        obstacles += [get_circle_obstacle((-1500-22-50, -1000+50), 45)]
+        obstacles += [get_circle_obstacle((+1500+22+50, 0), 45)]
 
     # Balises equipe cote gauche
     # Diametre de 9cm pour avoir 1cm de marge
     if (not START_ON_THE_RIGHT and WE_HAVE_BEACONS) or (START_ON_THE_RIGHT and ENNEMY_HAS_BEACONS):
-        obstacles += [Point(+1500+22+50, +1000-50).buffer(45).boundary]
-        obstacles += [Point(+1500+22+50, -1000+50).buffer(45).boundary]
-        obstacles += [Point(-1500-22-50, 0).buffer(45).boundary]
+        obstacles += [get_circle_obstacle((+1500+22+50, +1000-50), 45)]
+        obstacles += [get_circle_obstacle((+1500+22+50, -1000+50), 45)]
+        obstacles += [get_circle_obstacle((-1500-22-50, 0), 45)]
 
     # Les Jean-Michel casse-couilles
     if JEAN_MICHEL_CASSE_COUILLES:
@@ -45,7 +60,7 @@ def get_basic_obstacles():
 def get_dynamic_obstacles(robots):
     obstacles = []
     for r in robots:
-        obstacles+=[Point(r.get_center()).buffer(40).boundary]
+        obstacles+=[get_circle_obstacle(r.get_center(), 40)]
     return obstacles
 
 # x, y, r: position and rotation (degrees) of lidar on the table
