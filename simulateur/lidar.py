@@ -84,7 +84,7 @@ def get_lidar_data(x, y, r, obstacles):
         # to avoid detecting robot itself
         (start_x, start_y) = (x+50*math.cos(angle), y+50*math.sin(angle))
         # Point at the "infinite" where the lidar aims
-        (aim_x, aim_y) = (5000*math.cos(angle), 5000*math.sin(angle))
+        (aim_x, aim_y) = (x+5000*math.cos(angle), y+5000*math.sin(angle))
         line_of_sight = LineString([(start_x, start_y), (aim_x, aim_y)])
 
         points = line_of_sight.intersection(all_obstacles)
