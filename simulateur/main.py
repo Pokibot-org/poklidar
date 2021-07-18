@@ -7,15 +7,21 @@ from lidar import *
 from application import *
 
 
-t = init_turtle();
+t = init_turtle()
 
 basic_obstacles = get_basic_obstacles()
 
-robots = [Robot(1200, 0, 0, True)]#, Robot(-1200, 800, 0, False)]
+robots = [Robot(1200, 200, 0, True)]#, Robot(-1200, 800, 0, False)]
+
+time = 0
+sex = 0
+sey = 0
+ser = 0
 
 while 1:
 
     robots[0].simulate()
+    # robots[1].simulate()
     # for r in robots:
         # r.simulate()
     obstacles = basic_obstacles + get_dynamic_obstacles(robots)
@@ -27,6 +33,22 @@ while 1:
             r.update_lidar((rad_data, cart_data))
 
     update_graphics(t, obstacles, robots);
+
+    er = robots[0].r-robots[0].grobot.r
+    while er >= 180:er-=360
+    while er < -180:er+=360
+
+    sex+=abs(robots[0].x-robots[0].grobot.x)
+    sey+=abs(robots[0].y-robots[0].grobot.y)
+    ser+=abs(er)
+    time+=1
+
+    print("Real :", robots[0].x, robots[0].y, robots[0].r)
+    print("Guess:", robots[0].grobot.x, robots[0].grobot.y, robots[0].grobot.r)
+    print("Error:", robots[0].x-robots[0].grobot.x, robots[0].y-robots[0].grobot.y, robots[0].r-robots[0].grobot.r)
+    print("Average err:", round(sex/time, 2), round(sey/time, 2), round(ser/time, 2))
+
+    # input()
     # time.sleep(0.1)
 
 

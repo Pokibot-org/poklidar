@@ -4,7 +4,7 @@ import math
 
 # Milimeter to pixel conversion
 def mm2px(mm):
-    return PIXEL_PER_METER*mm//1000
+    return PIXEL_PER_METER*mm/1000
 
 def draw_table(tl):
     offset = tl.pos()
@@ -44,6 +44,26 @@ def draw_lidar_view(tl, xc, yc, data):
     tl.color('black', 'black')
     tl.goto(offset)
 
+def draw_lidar_view2(tl, xc, yc, data, r0=0):
+    offset = tl.pos()
+    tl.color('blue', 'blue')
+
+    for i in range(LIDAR_POINTS_PER_TURN):
+        angle = r0*math.pi/180
+        if LIDAR_ROTATE_CLOCKWISE:
+            angle += ((-i)*2*math.pi/LIDAR_POINTS_PER_TURN)
+        else:
+            angle += ((+i)*2*math.pi/LIDAR_POINTS_PER_TURN)
+        x = data[i]*math.cos(angle)+xc
+        y = data[i]*math.sin(angle)+yc
+        tl.goto(offset + (mm2px(xc), mm2px(yc)))
+        tl.pendown()
+        tl.goto(offset + (mm2px(x), mm2px(y)))
+        tl.penup()
+
+    tl.color('black', 'black')
+    tl.goto(offset)
+
 def draw_robot(tl, robot):
     offset = tl.pos()
     (x, y) = robot.get_center()
@@ -62,32 +82,33 @@ def draw_robot(tl, robot):
 
     tl.goto(offset)
     if robot.has_lidar:
-        (_, cart_data) = robot.get_lidar_data()
-        draw_lidar_view(tl, x, y, cart_data)
+        (rad_data, cart_data) = robot.get_lidar_data()
+        # draw_lidar_view(tl, x, y, cart_data)
+        draw_lidar_view2(tl, x, y, rad_data, robot.r)
 
 
-def draw_raw_lidar(tl, rad_data, lidar_results):
+def draw_raw_lidar(tl, rad_data, lidar_results, robot):
     offset = tl.pos()
 
-    # Draw distance vue
-    factor = 0.5
-    tl.color('blue', 'blue')
-    tl.goto(offset + (0, mm2px(factor*rad_data[0])))
-    tl.pendown()
-    for i in range(LIDAR_POINTS_PER_TURN):
-        angle = math.pi/2
-        if LIDAR_ROTATE_CLOCKWISE:
-            angle += -2*math.pi*i/LIDAR_POINTS_PER_TURN
-        else:
-            angle += 2*math.pi*i/LIDAR_POINTS_PER_TURN
-        j = (i+1)%LIDAR_POINTS_PER_TURN
-        (x, y) = (factor*rad_data[j]*math.cos(angle), factor*rad_data[j]*math.sin(angle))
-        tl.goto(offset + (mm2px(x), mm2px(y)))
-    tl.penup()
+    # # Draw distance vue
+    # factor = 0.5
+    # tl.color('blue', 'blue')
+    # tl.goto(offset + (0, mm2px(factor*rad_data[0])))
+    # tl.pendown()
+    # for i in range(LIDAR_POINTS_PER_TURN):
+    #     angle = math.pi/2
+    #     if LIDAR_ROTATE_CLOCKWISE:
+    #         angle += -2*math.pi*i/LIDAR_POINTS_PER_TURN
+    #     else:
+    #         angle += 2*math.pi*i/LIDAR_POINTS_PER_TURN
+    #     j = (i+1)%LIDAR_POINTS_PER_TURN
+    #     (x, y) = (factor*rad_data[j]*math.cos(angle), factor*rad_data[j]*math.sin(angle))
+    #     tl.goto(offset + (mm2px(x), mm2px(y)))
+    # tl.penup()
 
     # Draw delta vue
     factor = 0.5
-    (delta, poi) = lidar_results
+    (delta, poi, voisins) = lidar_results
     tl.color('orange', 'orange')
     tl.goto(offset + (0, mm2px(factor*abs(delta[0]))))
     tl.pendown()
@@ -114,12 +135,13 @@ def draw_raw_lidar(tl, rad_data, lidar_results):
     # Draw POI
     factor = 0.5
     tl.pensize(1)
-    for p in poi:
+    for p_i in range(len(poi)):
+        p = poi[p_i]
         (i0, i1, average, size) = p.get_all()
         angle = math.pi/2
         i = (i1-1+i0)/2
-        if i0 > i1:
-            i = (i1+LIDAR_POINTS_PER_TURN-1+i0)/2
+        # if i0 > i1:
+        #     i = (i1+LIDAR_POINTS_PER_TURN-1+i0)/2
         if LIDAR_ROTATE_CLOCKWISE:
             angle += -2*math.pi*i/LIDAR_POINTS_PER_TURN
         else:
@@ -130,6 +152,46 @@ def draw_raw_lidar(tl, rad_data, lidar_results):
             tl.color('purple', 'purple')
         else:
             tl.color('orange', 'orange')
+        tl.pendown()
+        if p.has_interesting_size() or p_i in voisins:
+            tl.begin_fill()
+        tl.circle(5)
+        if p.has_interesting_size() or p_i in voisins:
+            tl.end_fill()
+        tl.penup()
+
+    (cx, cy) = TABLE_CENTER
+    factor = 1
+    for p_i in range(len(poi)):
+        p = poi[p_i]
+        (i0, i1, average, size) = p.get_all()
+        angle = robot.r*math.pi/180
+        i = (i1-1+i0)/2
+        if LIDAR_ROTATE_CLOCKWISE:
+            angle += (-2*math.pi*i)/LIDAR_POINTS_PER_TURN
+        else:
+            angle += (2*math.pi*i)/LIDAR_POINTS_PER_TURN
+        (x, y) = (factor*average*math.cos(angle), factor*average*math.sin(angle))
+        tl.goto((mm2px(x+robot.x)+cx, mm2px(y+robot.y)-5+cy))
+        if p.has_interesting_size():
+            tl.color('purple', 'purple')
+        else:
+            tl.color('orange', 'orange')
+        tl.pendown()
+        #if p.has_interesting_size():
+        if p.has_interesting_size() or p_i in voisins:
+            tl.begin_fill()
+        tl.circle(5)
+        # if p.has_interesting_size():
+        if p.has_interesting_size() or p_i in voisins:
+            tl.end_fill()
+        tl.penup()
+
+    for p_i in range(len(poi)):
+        p = poi[p_i]
+        (x, y) = robot.grobot.get_xy(p.average, p.get_centered_angle())
+        tl.goto((mm2px(x)+cx, mm2px(y)-5+cy))
+        tl.color('green', 'green')
         tl.pendown()
         tl.begin_fill()
         tl.circle(5)
@@ -166,8 +228,8 @@ def update_graphics(tl, obstacles, robots):
     for r in robots:
         draw_robot(tl, r)
 
-    tl.goto(700, 0)
+    tl.goto(500, 0)
     (rad_data, _) = robots[0].get_lidar_data()
-    draw_raw_lidar(tl, rad_data, robots[0].lidar_results)
+    draw_raw_lidar(tl, rad_data, robots[0].lidar_results, robots[0])
 
     turtle.update()

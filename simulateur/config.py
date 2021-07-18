@@ -4,7 +4,7 @@ WE_HAVE_BEACONS    = True
 ENNEMY_HAS_BEACONS = False
 
 # Add obstacles to simulate people around the table
-JEAN_MICHEL_CASSE_COUILLES = False
+JEAN_MICHEL_CASSE_COUILLES = True
 # People are squares with the size defined bellow
 JEAN_MICHEL_WIDTH = 300
 
@@ -14,10 +14,10 @@ ENABLE_FAST_GRAPHICS = True
 LIDAR_POINTS_PER_TURN  = 400
 LIDAR_ROTATE_CLOCKWISE = True
 
+LIDAR_ANGLE_ERROR = 0
+LIDAR_DISTANCE_ERROR = 0
 LIDAR_ANGLE_ERROR = 0.5
 LIDAR_DISTANCE_ERROR = 0.02 # 2% resolution
-# LIDAR_ANGLE_ERROR = 0
-# LIDAR_DISTANCE_ERROR = 0
 
 
 # Graphic constant
