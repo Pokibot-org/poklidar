@@ -1,5 +1,6 @@
 import math
-from random import random
+import random
+import sys
 
 from shapely.geometry.polygon import LineString, Point
 from shapely.geometry import MultiLineString
@@ -7,6 +8,9 @@ from shapely.ops import nearest_points
 
 from config import *
 
+seed = random.randrange(sys.maxsize)
+rng = random.Random(seed)
+print("Seed was:", seed)
 
 
 def get_circle_obstacle(c, r):
@@ -78,7 +82,7 @@ def get_lidar_data(x, y, r, obstacles):
             angle += -2*math.pi*i/LIDAR_POINTS_PER_TURN
         else:
             angle += 2*math.pi*i/LIDAR_POINTS_PER_TURN
-        angle_error = (2*math.pi/LIDAR_POINTS_PER_TURN)*LIDAR_ANGLE_ERROR*(2*random()-1)
+        angle_error = (2*math.pi/LIDAR_POINTS_PER_TURN)*LIDAR_ANGLE_ERROR*(2*random.random()-1)
         angle+=angle_error
         # Line of sight begins 50mm away from the center
         # to avoid detecting robot itself
@@ -92,7 +96,7 @@ def get_lidar_data(x, y, r, obstacles):
             p1, p2 = nearest_points(Point(x, y), points)
             cart_data+=[p2.coords[0]]
             dist = Point(x, y).distance(p2)
-            rad_data+=[dist + (2*random()-1)*LIDAR_DISTANCE_ERROR*dist]
+            rad_data+=[dist + (2*random.random()-1)*LIDAR_DISTANCE_ERROR*dist]
         else:
             cart_data+=[(x, y)]
             rad_data+=[0]

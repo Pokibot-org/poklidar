@@ -51,7 +51,7 @@ class POI:
     def get_all(self):
         return (self.i0, self.i1, self.average, self.size)
     def has_interesting_size(self):
-        return self.size > 30 and self.size < 100
+        return self.size > 30 and self.size < 150
     def get_centered_angle(self):
         if LIDAR_ROTATE_CLOCKWISE:
             return -(self.i1-1+self.i0)*math.pi/LIDAR_POINTS_PER_TURN
@@ -252,50 +252,58 @@ def pre_find_angle(data0, data1):
     return best_i
 
 def solve_angle(d0, r0, d1, r1, dopp):
-    angle = r1-r0
-    x = math.asin(d1*math.sin(angle)/dopp)
-    return x
+    # https://math.stackexchange.com/questions/1365622/adding-two-polar-vectors
+    # ϕ=ϕ1+arctan2(r2sin(ϕ2−ϕ1),r1+r2cos(ϕ2−ϕ1))
+    # d1 is inverted to substract instead of adding
+    return r0+math.atan2(-d1*math.sin(r1-r0), d0-d1*math.cos(r1-r0))
 
 def apply_solution(poi, solution, grobot):
+    ref_angle = grobot.r*math.pi/180
     (s0, s1, s2) = solution
     (a01, a02, a12) = (-1, -1, -1)
     angle_sum = 0
     pond_sum = 0
     if s0 != -1 and s1 != -1:
         a01 = solve_angle(poi[s1].average, poi[s1].get_centered_angle(), poi[s0].average, poi[s0].get_centered_angle(), B_DISTANCE)
-        a01 = math.pi/2+a01+math.pi-poi[s1].get_centered_angle()
+        a01 = a01 + math.pi/2
+        while a01-ref_angle > math.pi:
+            a01-=2*math.pi
+        while a01-ref_angle <= -math.pi:
+            a01+=2*math.pi
         pond = 5000-(poi[s0].average+poi[s1].average)/2
         angle_sum+=pond*a01
         pond_sum+=pond
     if s0 != -1 and s2 != -1:
         a02 = solve_angle(poi[s0].average, poi[s0].get_centered_angle(), poi[s2].average, poi[s2].get_centered_angle(), A_DISTANCE)
-        a02 = a02+2*AB_ANGLE+3*math.pi/2-poi[s2].get_centered_angle()
-        while a02-a01 > math.pi:
+        a02 = a02 - (math.pi/2+math.pi/2-AB_ANGLE)
+        while a02-ref_angle > math.pi:
             a02-=2*math.pi
-        while a02-a01 <= -math.pi:
+        while a02-ref_angle <= -math.pi:
             a02+=2*math.pi
         pond = 5000-(poi[s0].average+poi[s2].average)/2
-        # angle_sum+=pond*a02
-        # pond_sum+=pond
+        angle_sum+=pond*a02
+        pond_sum+=pond
     if s1 != -1 and s2 != -1:
         a12 = solve_angle(poi[s1].average, poi[s1].get_centered_angle(), poi[s2].average, poi[s2].get_centered_angle(), A_DISTANCE)
-        print("BBB", a12*180/math.pi, poi[s1].average, poi[s1].get_centered_angle(), poi[s2].average, poi[s2].get_centered_angle())
-        a12 = a12+2*AB_ANGLE-math.pi/2-poi[s2].get_centered_angle()
-        # a12 = poi[s1].get_centered_angle()+AB_ANGLE+a12-math.pi
-
-        while a12-a01 > math.pi:
+        a12 = a12 - (math.pi+AB_ANGLE)
+        while a12-ref_angle > math.pi:
             a12-=2*math.pi
-        while a02-a01 <= -math.pi:
+        while a12-ref_angle <= -math.pi:
             a12+=2*math.pi
         pond = 5000-(poi[s1].average+poi[s2].average)/2
-        #angle_sum+=pond*a12
-        #pond_sum+=pond
-    r = angle_sum / pond_sum
+        angle_sum+=pond*a12
+        pond_sum+=pond
+
+    if pond_sum != 0:
+        r = -angle_sum / pond_sum
+    else:
+        print("WARNING: Angle was not found")
+        r = grobot.r*math.pi/180
     while(r >= 2*math.pi):r-=2*math.pi
     while(r < 0):r+=2*math.pi
 
-    print("Angle found", s0, s1, s2)
-    print(a01*180/math.pi, a02*180/math.pi, a12*180/math.pi, a01, a02, a12)
+    # print("Angle found", s0, s1, s2)
+    # print(a01*180/math.pi, a02*180/math.pi, a12*180/math.pi, a01, a02, a12)
 
     # We finally got the angle !
     # Now, we just need to get the position
@@ -316,8 +324,12 @@ def apply_solution(poi, solution, grobot):
             x_sum+=pond*x
             y_sum+=pond*y
             pond_sum+=pond
-    x = x_sum/pond_sum
-    y = y_sum/pond_sum
+    (x, y) = (grobot.x, grobot.y)
+    if pond_sum != 0:
+        x = x_sum/pond_sum
+        y = y_sum/pond_sum
+    else:
+        print("WARNING: Position was not found")
     r = r*180/math.pi
     # print("Found:", x, y, r)
 
@@ -333,8 +345,9 @@ def apply_solution(poi, solution, grobot):
 def solve_lidar(lidar_data, prev_lidar_data, grobot):
 
     pre_angle = pre_find_angle(lidar_data, prev_lidar_data)*360/LIDAR_POINTS_PER_TURN
-    if pre_angle > 330 or pre_angle < 318:
-        print("AAAAAAAAAAAAAAAAAAAAAAAAAA", pre_angle)
+    print("PRE_ANGLE", pre_angle)
+    # if pre_angle > 330 or pre_angle < 318:
+    #     print("AAAAAAAAAAAAAAAAAAAAAAAAAA", pre_angle)
     if LIDAR_ROTATE_CLOCKWISE:
         grobot.r = (grobot.r-pre_angle+360)%360
     else:
@@ -364,12 +377,17 @@ def solve_lidar(lidar_data, prev_lidar_data, grobot):
     # print(a)
     # print(b)
 
-    candidates = detect_beacons(poi, grobot)
-    solution = find_solution(poi, candidates)
+    poi_algo_t = []
+    for p in poi:
+        if p.has_interesting_size():
+            poi_algo_t += [p]
+
+    candidates = detect_beacons(poi_algo_t, grobot)
+    solution = find_solution(poi_algo_t, candidates)
     print(candidates)
     print(solution)
 
-    apply_solution(poi, solution, grobot)
+    apply_solution(poi_algo_t, solution, grobot)
 
 
     return (delta, poi, voisins)

@@ -6,7 +6,7 @@ ENNEMY_HAS_BEACONS = False
 # Add obstacles to simulate people around the table
 JEAN_MICHEL_CASSE_COUILLES = True
 # People are squares with the size defined bellow
-JEAN_MICHEL_WIDTH = 300
+JEAN_MICHEL_WIDTH = 100
 
 ENABLE_FAST_GRAPHICS = True
 

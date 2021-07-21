@@ -11,7 +11,7 @@ t = init_turtle()
 
 basic_obstacles = get_basic_obstacles()
 
-robots = [Robot(1200, 200, 0, True)]#, Robot(-1200, 800, 0, False)]
+robots = [Robot(1200, 500, 0, True), Robot(-1200, -800, 0, False), Robot(-1200, 800, 0, False), Robot(1200, -500, 0, False)]
 
 time = 0
 sex = 0
@@ -20,10 +20,10 @@ ser = 0
 
 while 1:
 
-    robots[0].simulate()
+    # robots[0].simulate()
     # robots[1].simulate()
-    # for r in robots:
-        # r.simulate()
+    for r in robots:
+        r.simulate()
     obstacles = basic_obstacles + get_dynamic_obstacles(robots)
     for r in robots:
         if r.has_lidar:
@@ -47,6 +47,9 @@ while 1:
     print("Guess:", robots[0].grobot.x, robots[0].grobot.y, robots[0].grobot.r)
     print("Error:", robots[0].x-robots[0].grobot.x, robots[0].y-robots[0].grobot.y, robots[0].r-robots[0].grobot.r)
     print("Average err:", round(sex/time, 2), round(sey/time, 2), round(ser/time, 2))
+
+    if abs(robots[0].x-robots[0].grobot.x) > 100 or abs(robots[0].y-robots[0].grobot.y) > 100:
+        input()
 
     # input()
     # time.sleep(0.1)
