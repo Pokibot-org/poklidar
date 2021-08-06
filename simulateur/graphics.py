@@ -32,17 +32,17 @@ def draw_obstacles(tl, obstacles):
     tl.color('black', 'black')
     tl.goto(offset)
 
-def draw_lidar_view(tl, xc, yc, data):
-    offset = tl.pos()
-    tl.color('green', 'green')
-    for (x, y) in data:
-        if (x, y) != (xc, yc):
-            tl.goto(offset + (mm2px(xc), mm2px(yc)))
-            tl.pendown()
-            tl.goto(offset + (mm2px(x), mm2px(y)))
-            tl.penup()
-    tl.color('black', 'black')
-    tl.goto(offset)
+# def draw_lidar_view(tl, xc, yc, data):
+#     offset = tl.pos()
+#     tl.color('green', 'green')
+#     for (x, y) in data:
+#         if (x, y) != (xc, yc):
+#             tl.goto(offset + (mm2px(xc), mm2px(yc)))
+#             tl.pendown()
+#             tl.goto(offset + (mm2px(x), mm2px(y)))
+#             tl.penup()
+#     tl.color('black', 'black')
+#     tl.goto(offset)
 
 def draw_lidar_view2(tl, xc, yc, data, r0=0):
     offset = tl.pos()
@@ -82,7 +82,7 @@ def draw_robot(tl, robot):
 
     tl.goto(offset)
     if robot.has_lidar:
-        (rad_data, cart_data) = robot.get_lidar_data()
+        rad_data = robot.lidar_data
         # draw_lidar_view(tl, x, y, cart_data)
         draw_lidar_view2(tl, x, y, rad_data, robot.r)
 
@@ -108,7 +108,7 @@ def draw_raw_lidar(tl, rad_data, lidar_results, robot):
 
     # Draw delta vue
     factor = 0.5
-    (delta, poi, voisins) = lidar_results
+    (delta, poi) = lidar_results
     tl.color('orange', 'orange')
     tl.goto(offset + (0, mm2px(factor*abs(delta[0]))))
     tl.pendown()
@@ -153,10 +153,10 @@ def draw_raw_lidar(tl, rad_data, lidar_results, robot):
         else:
             tl.color('orange', 'orange')
         tl.pendown()
-        if p.has_interesting_size() or p_i in voisins:
+        if p.has_interesting_size():
             tl.begin_fill()
         tl.circle(5)
-        if p.has_interesting_size() or p_i in voisins:
+        if p.has_interesting_size():
             tl.end_fill()
         tl.penup()
 
@@ -179,11 +179,11 @@ def draw_raw_lidar(tl, rad_data, lidar_results, robot):
             tl.color('orange', 'orange')
         tl.pendown()
         #if p.has_interesting_size():
-        if p.has_interesting_size() or p_i in voisins:
+        if p.has_interesting_size():
             tl.begin_fill()
         tl.circle(5)
         # if p.has_interesting_size():
-        if p.has_interesting_size() or p_i in voisins:
+        if p.has_interesting_size():
             tl.end_fill()
         tl.penup()
 
@@ -229,7 +229,7 @@ def update_graphics(tl, obstacles, robots):
         draw_robot(tl, r)
 
     tl.goto(500, 0)
-    (rad_data, _) = robots[0].get_lidar_data()
+    rad_data = robots[0].lidar_data
     draw_raw_lidar(tl, rad_data, robots[0].lidar_results, robots[0])
 
     turtle.update()

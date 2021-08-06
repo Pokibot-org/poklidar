@@ -1,4 +1,4 @@
-import math
+import math, random
 from application import *
 
 from graphics import mm2px
@@ -15,6 +15,13 @@ class Robot:
         self.x = x # Position X
         self.y = y # Position Y
         self.r = r # Rotation R
+        self.oldr = r
+
+        self.px = self.x
+        self.py = self.y
+        self.pr = self.r
+
+        self.dr = 0
 
         self.guess_x = x
         self.guess_y = y
@@ -22,8 +29,8 @@ class Robot:
 
         self.ptt_list = []
 
-        self.dx = 1000/10
-        self.dy = 1000/10
+        self.dx = ROBOT_MAX_HSPEED_PT
+        self.dy = ROBOT_MAX_HSPEED_PT
 
         self.has_lidar = has_lidar
         self.lidar_data = None
@@ -42,6 +49,11 @@ class Robot:
     def get_radius(self):
         return self.radius
 
+    def tick(self, t = 1):
+        self.x = self.px+self.dx*t
+        self.y = self.py+self.dy*t
+        self.r = self.pr+self.dr*t
+
     def simulate(self):
 
         # self.grobot.x = self.x
@@ -49,9 +61,6 @@ class Robot:
         # self.grobot.r = self.r
 
         if self.time != 0:
-
-            self.x+=self.dx
-            self.y+=self.dy
 
             if self.mode_xy == 0:
                 if self.x < -1500+self.radius and self.dx < 0:
@@ -75,20 +84,24 @@ class Robot:
                     self.dy = -self.dy
                 elif self.y > +1000-self.radius:
                     self.dy = -self.dy
+            self.dr = ((random.random()*2-1)*ROBOT_MAX_RSPEED_PT)%360
+
+            self.px = self.x
+            self.py = self.y
+            self.pr = self.r
 
 
-            self.r = (self.r+360/10)%360
 
         self.time+=1
 
     def get_lidar_data(self):
         return self.lidar_data
-    def update_lidar(self, lidar_data):
-        (rad_data, _) = lidar_data
+    def update_lidar(self, lidar_data, solve = True, start_angle = 0):
+        rad_data = lidar_data
         prev_rad_data = rad_data
         if self.lidar_data != None:
-            (prev_rad_data, _) = self.lidar_data
-        self.lidar_results = solve_lidar(rad_data, prev_rad_data, self.grobot)
+            prev_rad_data = self.lidar_data
+        self.lidar_results = solve_lidar(rad_data, prev_rad_data, self.grobot, solve)
         self.lidar_data = lidar_data
 
     def has_lidar(self):
