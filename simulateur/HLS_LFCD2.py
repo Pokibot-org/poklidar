@@ -61,10 +61,10 @@ class HLS_LFCD2:
 #
 # startTime = time.time()
 #
-# lidar = HLS_LFCD2()
-# lidar.open()
-# lidar.start()
-#
-# print(lidar.get_one_scan())
-#
-# lidar.stop()
+lidar = HLS_LFCD2()
+lidar.open()
+lidar.start()
+
+print(lidar.get_one_scan())
+
+lidar.stop()

@@ -15,6 +15,8 @@ ROBOT_MAX_HSPEED = 1000
 # Maximum rotational speed (in degree per second)
 ROBOT_MAX_RSPEED = 360
 
+ROBOT_NERF = 1
+
 
 # Hardware config
 LIDAR_FREQUENCY = 10
@@ -25,6 +27,7 @@ LIDAR_ANGLE_ERROR = 0.5
 LIDAR_DISTANCE_ERROR = 0.02 # 2% resolution
 
 LIDAR_ANGLE_PER_STEP = 400
+LIDAR_PACKET_SIZE = 6
 
 # Graphic constant
 PIXEL_PER_METER = 200

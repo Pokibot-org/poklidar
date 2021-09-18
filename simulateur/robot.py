@@ -29,8 +29,8 @@ class Robot:
 
         self.ptt_list = []
 
-        self.dx = ROBOT_MAX_HSPEED_PT
-        self.dy = ROBOT_MAX_HSPEED_PT
+        self.dx = ROBOT_MAX_HSPEED_PT/ROBOT_NERF
+        self.dy = ROBOT_MAX_HSPEED_PT/ROBOT_NERF
 
         self.has_lidar = has_lidar
         self.lidar_data = None
@@ -84,7 +84,10 @@ class Robot:
                     self.dy = -self.dy
                 elif self.y > +1000-self.radius:
                     self.dy = -self.dy
-            self.dr = ((random.random()*2-1)*ROBOT_MAX_RSPEED_PT)%360
+            self.dr = ((random.random()*2-1)*ROBOT_MAX_RSPEED_PT/ROBOT_NERF)%360
+            # self.dr = 0
+            if self.dr > 180:
+                self.dr-=360
 
             self.px = self.x
             self.py = self.y
